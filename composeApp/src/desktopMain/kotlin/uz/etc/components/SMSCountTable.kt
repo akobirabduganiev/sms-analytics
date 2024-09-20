@@ -144,13 +144,18 @@ fun SMSCountsTable(counts: Map<String, Int>) {
     }
 }
 
-// Helper function to build table text
 private fun buildTableText(counts: Map<String, Int>): String {
     val stringBuilder = StringBuilder()
-    stringBuilder.append("Service Identifier\tSMS Count\n")
-    stringBuilder.append("----------------------------------\n")
+    val header = "%-20s %10s".format("Service Identifier", "SMS Count")
+    val separator = "-".repeat(32)
+
+    stringBuilder.append(header).append("\n")
+    stringBuilder.append(separator).append("\n")
+
     counts.entries.sortedByDescending { it.value }.forEach { (service, count) ->
-        stringBuilder.append("$service\t$count\n")
+        val line = "%-20s %10d".format(service, count)
+        stringBuilder.append(line).append("\n")
     }
+
     return stringBuilder.toString()
 }
