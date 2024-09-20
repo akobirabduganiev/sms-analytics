@@ -14,3 +14,20 @@ fun openFileChooser(): File? {
         null
     }
 }
+
+fun saveFileDialog(): File? {
+    val chooser = JFileChooser()
+    chooser.fileFilter = FileNameExtensionFilter("Text Files", "txt")
+    chooser.dialogTitle = "Save As"
+    val result = chooser.showSaveDialog(null) // Must be called on EDT
+    return if (result == JFileChooser.APPROVE_OPTION) {
+        var file = chooser.selectedFile
+        if (!file.name.endsWith(".txt")) {
+            file = File(file.absolutePath + ".txt")
+        }
+        file
+    } else {
+        null
+    }
+}
+
