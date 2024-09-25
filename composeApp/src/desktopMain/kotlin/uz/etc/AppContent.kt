@@ -67,9 +67,6 @@ fun AppContent(
                 window = window,
                 fileResults = fileResults,
                 selectedFileIndex = selectedFileIndex,
-                isProcessing = isProcessing,
-                progress = progress,
-                totalLines = totalLines,
                 onFileSelected = { file ->
                     coroutineScope.launch {
                         processFile(

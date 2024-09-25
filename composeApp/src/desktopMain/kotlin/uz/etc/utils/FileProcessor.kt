@@ -1,15 +1,16 @@
 package uz.etc.utils
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uz.etc.components.generateLineChartData
 import uz.etc.models.FileResult
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 
 suspend fun processFile(
     fileResults: MutableList<FileResult>,
@@ -31,7 +32,10 @@ suspend fun processFile(
                     setTotalLines(total)
                 }
             )
-            fileResults.add(FileResult(selectedFile.name, counts))
+            // Convert counts to the expected type
+            val countsWithList = counts.mapValues { listOf(it.value) }
+            val lineChartData = generateLineChartData(countsWithList)
+            fileResults.add(FileResult(selectedFile.name, counts, lineChartData))
             setSelectedFileIndex(fileResults.size - 1)
         }
     } catch (e: Exception) {
@@ -48,18 +52,15 @@ suspend fun processTextFile(
 ): Map<String, Int> = withContext(Dispatchers.IO) {
     val serviceCounts = ConcurrentHashMap<String, LongAdder>()
     val totalLines = file.useLines { it.count() }
-
     if (totalLines == 0) {
         // No lines to process
         onProgressUpdate(0, 0)
         return@withContext emptyMap()
     }
-
     val availableProcessors = Runtime.getRuntime().availableProcessors()
     val numWorkers = minOf(availableProcessors, totalLines)
     val progressCounter = AtomicInteger(0)
     val channel = Channel<String>(capacity = 1000)
-
     coroutineScope {
         // Producer coroutine: Reads lines from the file and sends them to the channel
         val producer = launch {
@@ -70,7 +71,6 @@ suspend fun processTextFile(
             }
             channel.close()
         }
-
         // Worker coroutines: Process lines received from the channel
         val workers = List(numWorkers) {
             launch {
@@ -82,12 +82,10 @@ suspend fun processTextFile(
                         }
                         continue // Skip header or separator lines
                     }
-
                     val serviceIdentifier = extractServiceIdentifier(line)
                     if (serviceIdentifier != null && serviceIdentifier.isNotEmpty()) {
                         serviceCounts.computeIfAbsent(serviceIdentifier) { LongAdder() }.increment()
                     }
-
                     val processedLines = progressCounter.incrementAndGet()
                     if (processedLines % 100_000 == 0) {
                         onProgressUpdate(processedLines, totalLines)
@@ -95,18 +93,14 @@ suspend fun processTextFile(
                 }
             }
         }
-
         // Wait for all coroutines to complete
         producer.join()
         workers.forEach { it.join() }
     }
-
     // Final progress update to ensure the progress bar reaches 100%
     onProgressUpdate(totalLines, totalLines)
-
     // Convert LongAdder values to Int
     val counts = serviceCounts.mapValues { it.value.sum().toInt() }
-
     counts
 }
 

@@ -1,3 +1,4 @@
+// src/main/kotlin/uz/etc/components/MainContent.kt
 package uz.etc.components
 
 import androidx.compose.foundation.layout.*
@@ -14,9 +15,6 @@ fun MainContent(
     window: Window,
     fileResults: List<FileResult>,
     selectedFileIndex: Int?,
-    isProcessing: Boolean,
-    progress: Int,
-    totalLines: Int,
     onFileSelected: (java.io.File) -> Unit
 ) {
     var currentView by remember { mutableStateOf("Table") } // Track the current view
@@ -28,6 +26,7 @@ fun MainContent(
     ) {
         if (selectedFileIndex != null && selectedFileIndex < fileResults.size) {
             val selectedFileResult = fileResults[selectedFileIndex]
+
             Text(
                 "File: ${selectedFileResult.fileName}",
                 style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)
@@ -45,20 +44,25 @@ fun MainContent(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
-                    onClick = { currentView = "Chart" },
-                    enabled = currentView != "Chart"
+                    onClick = { currentView = "Analytics" },
+                    enabled = currentView != "Analytics"
                 ) {
-                    Text("Chart View")
+                    Text("Analytics View")
                 }
             }
 
             // Display the selected view
             when (currentView) {
                 "Table" -> SMSCountsTable(selectedFileResult.counts)
-                "Chart" -> SMSCountsChart(selectedFileResult.counts)
+                "Analytics" -> AnalyticsView(
+                    counts = selectedFileResult.counts
+                )
             }
         } else if (fileResults.isNotEmpty()) {
-            Text("Select a file from the list to view its results.", style = MaterialTheme.typography.h6)
+            Text(
+                "Select a file from the list to view its results.",
+                style = MaterialTheme.typography.h6
+            )
         } else {
             FileDropArea(
                 window = window,
