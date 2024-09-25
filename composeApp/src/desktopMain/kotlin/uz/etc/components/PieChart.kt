@@ -1,4 +1,3 @@
-// src/main/kotlin/uz/etc/components/PieChart.kt
 package uz.etc.components
 
 import androidx.compose.foundation.Canvas
@@ -77,8 +76,8 @@ fun PieChart(
                     }
                 }
         ) {
-            canvasSize = size // Update canvasSize with the current size
-            var startAngle = -90f // Start from the top
+            canvasSize = size
+            var startAngle = -90f
             data.forEachIndexed { index, pieData ->
                 val sweepAngle = animatedSweepAngles.getOrNull(index) ?: 0f
                 drawArc(
@@ -121,12 +120,11 @@ fun PieChart(
             }
         }
 
-        // Tooltip
         tooltipInfo?.let { tooltip ->
             Tooltip(
                 text = tooltip.text,
                 position = tooltip.position,
-                parentSize = canvasSize // Use the updated canvasSize
+                parentSize = canvasSize
             )
         }
     }
