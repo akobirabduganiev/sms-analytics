@@ -62,7 +62,6 @@ fun AppContent(
                 }
             )
             Divider(modifier = Modifier.width(1.dp).fillMaxHeight())
-            // Main content area
             MainContent(
                 window = window,
                 fileResults = fileResults,
